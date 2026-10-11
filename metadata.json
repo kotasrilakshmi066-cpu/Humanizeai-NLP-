@@ -1,0 +1,6 @@
+{
+  "name": "VeriProse Enterprise",
+  "description": "Enterprise AI Humanization & Natural Language Refinement platform with entity preservation and factuality verification.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
