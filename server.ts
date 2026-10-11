@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { GoogleGenAI, Type } from "@google/genai";
 
 dotenv.config();
+dotenv.config({ path: ".env.local" });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -82,7 +83,7 @@ Required Execution Pipeline:
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
   app.use(express.json({ limit: "2mb" }));
 
@@ -93,6 +94,13 @@ async function startServer() {
       if (!raw_text || typeof raw_text !== "string" || !raw_text.trim()) {
         return res.status(400).json({
           error: "Parameter 'raw_text' is required and must be a non-empty string.",
+        });
+      }
+
+      if (!process.env.GEMINI_API_KEY) {
+        return res.status(400).json({
+          error:
+            "GEMINI_API_KEY is not configured. Please add GEMINI_API_KEY=your_key in a .env or .env.local file.",
         });
       }
 
@@ -110,8 +118,9 @@ async function startServer() {
         2
       );
 
+      const modelName = process.env.GEMINI_MODEL || "gemini-3.8-flash";
       const response = await ai.models.generateContent({
-        model: "gemini-3.8-flash",
+        model: modelName,
         contents: `Execute the 4-stage AI Humanization & Natural Language Refinement pipeline on the following input payload and return strict JSON:\n\n${promptPayload}`,
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
