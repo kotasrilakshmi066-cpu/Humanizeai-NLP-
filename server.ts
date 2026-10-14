@@ -184,7 +184,9 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`VeriProse Enterprise server listening on http://0.0.0.0:${PORT}`);
+    console.log(`\n  VeriProse Enterprise server running at:`);
+    console.log(`  > Local:   http://localhost:${PORT}`);
+    console.log(`  > Network: http://127.0.0.1:${PORT}\n`);
   });
 }
 

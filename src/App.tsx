@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -32,7 +32,7 @@ import {
   verifyEntityPreservation,
 } from "./utils/pipelineEngine";
 
-type ActiveSection = "workspace" | "pipeline" | "json" | "ledger";
+type ActiveSection = "workspace" | "pipeline" | "ledger";
 
 export default function App() {
   const [auditRecords, setAuditRecords] = useState<AuditRunRecord[]>(INITIAL_AUDIT_RECORDS);
@@ -80,6 +80,38 @@ export default function App() {
       factuality_verification: output.factuality_verification,
     };
   }, [output]);
+
+  // Smooth scroll handler with offset compensation for the sticky navigation bar
+  const scrollToSection = (sectionId: ActiveSection) => {
+    setActiveSection(sectionId);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  // Scroll spy to automatically highlight current section in navigation bar
+  useEffect(() => {
+    const handleScroll = () => {
+      const sectionIds: ActiveSection[] = ["workspace", "pipeline", "ledger"];
+      const scrollPosition = window.scrollY + 160;
+
+      for (let i = sectionIds.length - 1; i >= 0; i--) {
+        const el = document.getElementById(sectionIds[i]);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          const top = rect.top + window.scrollY;
+          if (scrollPosition >= top) {
+            setActiveSection(sectionIds[i]);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleSelectPreset = (record: AuditRunRecord) => {
     setActiveRecordId(record.id);
@@ -406,22 +438,22 @@ export default function App() {
             href="#workspace"
             onClick={(e) => {
               e.preventDefault();
-              setActiveSection("workspace");
+              scrollToSection("workspace");
             }}
-            className="font-display text-lg font-bold tracking-tight text-slate-950 whitespace-nowrap shrink-0"
+            className="font-display text-lg font-bold tracking-tight text-slate-950 whitespace-nowrap shrink-0 cursor-pointer"
           >
             VeriProse Enterprise
           </a>
 
-          {/* Zone 2: 4 concise single-line navigation links */}
+          {/* Zone 2: 3 concise single-line navigation links */}
           <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-600">
             <a
               href="#workspace"
               onClick={(e) => {
                 e.preventDefault();
-                setActiveSection("workspace");
+                scrollToSection("workspace");
               }}
-              className={`hover:text-slate-950 transition-colors whitespace-nowrap shrink-0 py-0.5 ${
+              className={`hover:text-slate-950 transition-colors whitespace-nowrap shrink-0 py-0.5 cursor-pointer ${
                 activeSection === "workspace"
                   ? "text-slate-950 underline decoration-slate-950 decoration-2 underline-offset-8"
                   : ""
@@ -433,9 +465,9 @@ export default function App() {
               href="#pipeline"
               onClick={(e) => {
                 e.preventDefault();
-                setActiveSection("pipeline");
+                scrollToSection("pipeline");
               }}
-              className={`hover:text-slate-950 transition-colors whitespace-nowrap shrink-0 py-0.5 ${
+              className={`hover:text-slate-950 transition-colors whitespace-nowrap shrink-0 py-0.5 cursor-pointer ${
                 activeSection === "pipeline"
                   ? "text-slate-950 underline decoration-slate-950 decoration-2 underline-offset-8"
                   : ""
@@ -444,26 +476,12 @@ export default function App() {
               4-Stage Pipeline
             </a>
             <a
-              href="#json"
-              onClick={(e) => {
-                e.preventDefault();
-                setActiveSection("json");
-              }}
-              className={`hover:text-slate-950 transition-colors whitespace-nowrap shrink-0 py-0.5 ${
-                activeSection === "json"
-                  ? "text-slate-950 underline decoration-slate-950 decoration-2 underline-offset-8"
-                  : ""
-              }`}
-            >
-              Strict JSON Schema
-            </a>
-            <a
               href="#ledger"
               onClick={(e) => {
                 e.preventDefault();
-                setActiveSection("ledger");
+                scrollToSection("ledger");
               }}
-              className={`hover:text-slate-950 transition-colors whitespace-nowrap shrink-0 py-0.5 ${
+              className={`hover:text-slate-950 transition-colors whitespace-nowrap shrink-0 py-0.5 cursor-pointer ${
                 activeSection === "ledger"
                   ? "text-slate-950 underline decoration-slate-950 decoration-2 underline-offset-8"
                   : ""
@@ -497,7 +515,7 @@ export default function App() {
               <span aria-hidden="true">·</span>
               <span>Zero-Hallucination Entity Lock</span>
               <span aria-hidden="true">·</span>
-              <span>Strict JSON Output</span>
+              <span>Factuality & Meaning Check</span>
             </div>
             <h1
               className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-950"
@@ -556,7 +574,7 @@ export default function App() {
         </section>
 
         {/* Scenario Preset Bar & Input Parameter Controls */}
-        <section className="bg-white border border-slate-200 rounded-xl p-5 space-y-5">
+        <section id="workspace" className="bg-white border border-slate-200 rounded-xl p-5 space-y-5 scroll-mt-24">
           <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div className="space-y-1">
               <div className="text-xs font-semibold text-slate-900">
@@ -667,7 +685,6 @@ export default function App() {
 
         {/* Primary Dual-Pane Comparison & Interactive Verification Studio */}
         <section
-          id="workspace"
           className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch"
         >
           {/* Left Column: Raw Input (raw_text) + Inline Flaw & Entity Scanner */}
@@ -867,219 +884,177 @@ export default function App() {
           </div>
         </section>
 
-        {/* 4-Stage Pipeline Breakdown & Strict JSON Output Inspector */}
+        {/* 4-Stage Pipeline Execution Diagnostics (Full-Width Responsive View) */}
         <section
           id="pipeline"
-          className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start"
+          className="bg-white border border-slate-200 rounded-xl p-6 lg:p-8 space-y-6 scroll-mt-24"
         >
-          {/* Left 7 Columns: 4-Stage Pipeline Diagnostic Inspector */}
-          <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-6 space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div>
-                <h2 className="font-display text-lg font-semibold text-slate-950">
-                  03. Execution Pipeline Diagnostics
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Granular inspection of robotic flaw stripping, entity locks, and semantic verification
-                </p>
-              </div>
-              <span className="font-mono text-xs text-slate-500 tabular-nums">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <h2 className="font-display text-lg font-semibold text-slate-950">
+                03. Execution Pipeline Diagnostics
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Granular inspection of robotic flaw stripping, entity locks, contextual rewrite, and semantic verification
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-xs text-slate-600 bg-slate-100 px-3 py-1 rounded-md">
                 4 Sequential Stages
               </span>
-            </div>
-
-            {/* Stage 1: Robotic Language Detection */}
-            <div className="space-y-2.5 pb-5 border-b border-slate-100">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-slate-900">
-                  Stage 1 · Robotic Language Detection (<code className="font-mono text-xs">detected_flaws</code>)
-                </h3>
-                <span className="font-mono text-xs text-slate-500 tabular-nums">
-                  {output.detected_flaws.length} phrases isolated
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Repetitive transitions, artificial filler, and templated corporate structures stripped during rewrite:
-              </p>
-              {output.detected_flaws.length === 0 ? (
-                <div className="text-xs text-slate-500 italic py-2">
-                  No robotic templates detected in source text.
-                </div>
-              ) : (
-                <ul className="divide-y divide-slate-100 border border-slate-200 rounded-lg">
-                  {output.detected_flaws.map((flaw, index) => (
-                    <li
-                      key={index}
-                      className="px-3.5 py-2 flex items-center justify-between gap-4 text-xs"
-                    >
-                      <span className="font-mono text-slate-800">&ldquo;{flaw}&rdquo;</span>
-                      <span className="text-amber-700 whitespace-nowrap shrink-0">
-                        Replaced with natural transition
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Stage 2: Entity & Fact Extraction */}
-            <div className="space-y-3 pb-5 border-b border-slate-100">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-slate-900">
-                  Stage 2 · Entity & Fact Extraction (<code className="font-mono text-xs">preserved_entities</code>)
-                </h3>
-                <span className="font-mono text-xs text-slate-500 tabular-nums">
-                  {liveAudit.matchedEntities.length}/{output.preserved_entities.length} verified in output
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Names, rubric scores, dates, technical standards, and compensation metrics locked for 100% accuracy:
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {output.preserved_entities.map((entity) => {
-                  const isPresent = liveAudit.matchedEntities.includes(entity);
-                  return (
-                    <div
-                      key={entity}
-                      className="px-3 py-2 border border-slate-200 rounded-lg flex items-center justify-between gap-2 text-xs"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        {isPresent ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
-                        ) : (
-                          <AlertTriangle className="w-3.5 h-3.5 text-[#DC2626] shrink-0" />
-                        )}
-                        <span className="font-mono text-slate-900 truncate" title={entity}>
-                          {entity}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span
-                          className={`font-mono text-[11px] ${
-                            isPresent ? "text-[#16A34A]" : "text-[#DC2626] font-semibold"
-                          }`}
-                        >
-                          {isPresent ? "LOCKED" : "MISSING"}
-                        </span>
-                        <button
-                          onClick={() => handleRemoveProtectedEntity(entity)}
-                          title="Remove entity constraint"
-                          className="text-slate-400 hover:text-slate-700 cursor-pointer"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Add custom entity lock */}
-              <form onSubmit={handleAddProtectedEntity} className="flex items-center gap-2 pt-1">
-                <input
-                  type="text"
-                  value={newEntityInput}
-                  onChange={(e) => setNewEntityInput(e.target.value)}
-                  placeholder="Add custom protected entity or metric (e.g. 99.99% SLA, Oct 15)..."
-                  className="flex-1 px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-slate-50/50 focus:outline-none focus:border-slate-900"
-                />
-                <button
-                  type="submit"
-                  className="px-3 py-1.5 text-xs font-medium text-slate-800 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Lock Entity</span>
-                </button>
-              </form>
-            </div>
-
-            {/* Stage 3 & Stage 4 Summary */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-1.5">
-                <h3 className="text-sm font-semibold text-slate-900">
-                  Stage 3 · Contextual Rewrite
-                </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Calibrated for <span className="font-semibold text-slate-900">{contextType}</span>{" "}
-                  using a <span className="font-semibold text-slate-900">{targetTone}</span> register
-                  ({TONE_PROFILES[targetTone].summary})
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <h3 className="text-sm font-semibold text-slate-900">
-                  Stage 4 · Factuality & Meaning Check
-                </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Status:{" "}
-                  <span
-                    className={`font-mono font-semibold ${
-                      isPassed ? "text-[#16A34A]" : "text-[#DC2626]"
-                    }`}
-                  >
-                    {output.factuality_verification.status}
-                  </span>{" "}
-                  · Confidence Score:{" "}
-                  <span className="font-mono font-semibold text-slate-900 tabular-nums">
-                    {output.factuality_verification.confidence_score.toFixed(2)}
-                  </span>
-                </p>
-              </div>
+              <button
+                onClick={handleDownloadJson}
+                title="Download verified audit payload"
+                className="px-3 py-1.5 text-xs font-medium text-slate-700 hover:text-slate-950 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export Run Payload</span>
+              </button>
             </div>
           </div>
 
-          {/* Right 5 Columns: Strict JSON Schema Output Viewer */}
-          <div
-            id="json"
-            className="lg:col-span-5 bg-[#0F172A] text-slate-100 border border-slate-800 rounded-xl p-6 space-y-4"
-          >
-            <div className="flex items-center justify-between gap-4 pb-3 border-b border-slate-800">
-              <div>
-                <h2 className="font-display text-base font-semibold text-white">
-                  04. Strict JSON Output Contract
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Machine-consumable payload returned by <code className="font-mono">POST /api/refine</code>
-                </p>
+          {/* Stage 1: Robotic Language Detection */}
+          <div className="space-y-2.5 pb-6 border-b border-slate-100">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">
+                Stage 1 · Robotic Language Detection (<code className="font-mono text-xs text-slate-700">detected_flaws</code>)
+              </h3>
+              <span className="font-mono text-xs text-slate-500 tabular-nums">
+                {output.detected_flaws.length} phrases isolated
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">
+              Repetitive transitions, artificial filler, and templated corporate structures stripped during rewrite:
+            </p>
+            {output.detected_flaws.length === 0 ? (
+              <div className="text-xs text-slate-500 italic py-2">
+                No robotic templates detected in source text.
               </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                {output.detected_flaws.map((flaw, index) => (
+                  <div
+                    key={index}
+                    className="px-3.5 py-2.5 border border-slate-200 rounded-lg flex items-center justify-between gap-4 text-xs bg-slate-50/40"
+                  >
+                    <span className="font-mono text-slate-800 truncate" title={flaw}>
+                      &ldquo;{flaw}&rdquo;
+                    </span>
+                    <span className="text-amber-700 whitespace-nowrap shrink-0 font-medium">
+                      Replaced with natural transition
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleCopy("json")}
-                  className="px-3 py-1.5 text-xs font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
-                >
-                  {copiedKey === "json" ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Copied JSON</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copy JSON</span>
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={handleDownloadJson}
-                  className="px-3 py-1.5 text-xs font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Export</span>
-                </button>
-              </div>
+          {/* Stage 2: Entity & Fact Extraction */}
+          <div className="space-y-3 pb-6 border-b border-slate-100">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">
+                Stage 2 · Entity & Fact Extraction (<code className="font-mono text-xs text-slate-700">preserved_entities</code>)
+              </h3>
+              <span className="font-mono text-xs text-slate-500 tabular-nums">
+                {liveAudit.matchedEntities.length}/{output.preserved_entities.length} verified in output
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">
+              Names, rubric scores, dates, technical standards, and compensation metrics locked for 100% accuracy:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              {output.preserved_entities.map((entity) => {
+                const isPresent = liveAudit.matchedEntities.includes(entity);
+                return (
+                  <div
+                    key={entity}
+                    className="px-3 py-2 border border-slate-200 rounded-lg flex items-center justify-between gap-2 text-xs bg-white"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      {isPresent ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
+                      ) : (
+                        <AlertTriangle className="w-3.5 h-3.5 text-[#DC2626] shrink-0" />
+                      )}
+                      <span className="font-mono text-slate-900 truncate" title={entity}>
+                        {entity}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span
+                        className={`font-mono text-[11px] ${
+                          isPresent ? "text-[#16A34A]" : "text-[#DC2626] font-semibold"
+                        }`}
+                      >
+                        {isPresent ? "LOCKED" : "MISSING"}
+                      </span>
+                      <button
+                        onClick={() => handleRemoveProtectedEntity(entity)}
+                        title="Remove entity constraint"
+                        className="text-slate-400 hover:text-slate-700 cursor-pointer"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
-            <pre className="font-mono text-xs leading-relaxed text-slate-200 overflow-x-auto max-h-[460px] p-4 rounded-lg bg-slate-950/80 border border-slate-800/80 tabular-nums">
-              {JSON.stringify(strictJsonOutput, null, 2)}
-            </pre>
+            {/* Add custom entity lock */}
+            <form onSubmit={handleAddProtectedEntity} className="flex items-center gap-2 pt-1 max-w-xl">
+              <input
+                type="text"
+                value={newEntityInput}
+                onChange={(e) => setNewEntityInput(e.target.value)}
+                placeholder="Add custom protected entity or metric (e.g. 99.99% SLA, Oct 15)..."
+                className="flex-1 px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-slate-50/50 focus:outline-none focus:border-slate-900"
+              />
+              <button
+                type="submit"
+                className="px-3 py-1.5 text-xs font-medium text-slate-800 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Lock Entity</span>
+              </button>
+            </form>
+          </div>
 
-            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-              <span>Schema Compliance: 100% Validated</span>
-              <span className="font-mono tabular-nums">
-                {JSON.stringify(strictJsonOutput).length} bytes
-              </span>
+          {/* Stage 3 & Stage 4 Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/60 p-5 rounded-lg border border-slate-200">
+            <div className="space-y-1.5">
+              <h3 className="text-sm font-semibold text-slate-900">
+                Stage 3 · Contextual Rewrite
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Calibrated for <span className="font-semibold text-slate-900">{contextType}</span>{" "}
+                using a <span className="font-semibold text-slate-900">{targetTone}</span> register
+                ({TONE_PROFILES[targetTone].summary})
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-sm font-semibold text-slate-900">
+                Stage 4 · Factuality & Meaning Check
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Status:{" "}
+                <span
+                  className={`font-mono font-semibold ${
+                    isPassed ? "text-[#16A34A]" : "text-[#DC2626]"
+                  }`}
+                >
+                  {output.factuality_verification.status}
+                </span>{" "}
+                · Confidence Score:{" "}
+                <span className="font-mono font-semibold text-slate-900 tabular-nums">
+                  {output.factuality_verification.confidence_score.toFixed(2)}
+                </span>
+              </p>
+              <p className="text-xs text-slate-500 italic">
+                {output.factuality_verification.discrepancy_notes}
+              </p>
             </div>
           </div>
         </section>
@@ -1087,7 +1062,7 @@ export default function App() {
         {/* Enterprise Audit Ledger Section */}
         <section
           id="ledger"
-          className="bg-white border border-slate-200 rounded-xl p-6 space-y-5"
+          className="bg-white border border-slate-200 rounded-xl p-6 space-y-5 scroll-mt-24"
         >
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
